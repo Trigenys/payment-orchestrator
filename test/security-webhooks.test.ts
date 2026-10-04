@@ -237,3 +237,32 @@ test("webhook credential environment mismatches fail before verification", async
   assert.equal(result.error.code, "CREDENTIAL_BINDING_NOT_FOUND");
   assert.equal(adapter.verifyCalls, 0);
 });
+
+
+test("oversized webhook bodies are rejected before verification", async () => {
+  const adapter = new TestWebhookAdapter();
+
+  const service = new WebhookIngressService({
+    adapter,
+    credentialRegistry: new InMemoryWebhookCredentialRegistry([binding]),
+    credentialResolver: new ProviderCredentialResolver(
+      new InMemorySecretStore([webhookSecret])
+    ),
+    paymentEventSink: {
+      async ingestProviderEvent() {
+        throw new Error("must not be called");
+      }
+    },
+    maxBodyBytes: 4
+  });
+
+  const result = await service.ingest({
+    ...requestWithSignature("00".repeat(32)),
+    rawBody: Buffer.from("too-large")
+  });
+
+  assert.equal(result.ok, false);
+  if (result.ok) return;
+  assert.equal(result.error.code, "BODY_TOO_LARGE");
+  assert.equal(adapter.verifyCalls, 0);
+});
