@@ -61,6 +61,8 @@ class StubHttpClient implements ProviderHttpClient {
       request.method === "GET" &&
       request.url.includes("/v3/transactions/verify_by_reference")
     ) {
+      const txRef = new URL(request.url).searchParams.get("tx_ref") ?? "missing";
+
       return {
         status: 200,
         body: {
@@ -68,7 +70,7 @@ class StubHttpClient implements ProviderHttpClient {
           message: "Transaction fetched successfully",
           data: {
             id: 98765,
-            tx_ref: "zamari-payment-1",
+            tx_ref: txRef,
             flw_ref: "FLW-MOCK-98765",
             amount: 50000,
             currency: "XAF",
