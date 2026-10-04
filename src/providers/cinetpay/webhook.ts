@@ -149,7 +149,8 @@ export class CinetPayV2WebhookAdapter implements ProviderWebhookAdapter {
   }
 
   async normalize(
-    request: RawWebhookRequest
+    request: RawWebhookRequest,
+    _verification: Extract<WebhookVerificationResult, { readonly ok: true }>
   ): Promise<NormalizedProviderPaymentEvent> {
     const fields = parseForm(request.rawBody);
     const verification = await this.options.client.verifyPayment(
