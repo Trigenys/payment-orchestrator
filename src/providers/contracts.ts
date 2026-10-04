@@ -68,6 +68,11 @@ export interface PaymentCustomer {
   readonly phone?: string;
 }
 
+export interface ProviderAccountContact {
+  readonly email?: string;
+  readonly phone?: string;
+}
+
 export interface CreateProviderAccountInput {
   readonly merchantId: string;
   readonly displayName: string;
@@ -75,6 +80,7 @@ export interface CreateProviderAccountInput {
   readonly currency: string;
   readonly externalReference: string;
   readonly settlementDestination: SettlementDestination;
+  readonly contact?: ProviderAccountContact;
 }
 
 export interface CreatePaymentInput {
