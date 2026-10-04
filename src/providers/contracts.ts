@@ -44,12 +44,37 @@ export interface PaymentAllocation {
   readonly amount: Money;
 }
 
+export type SettlementDestination =
+  | {
+      readonly type: "bank_account";
+      readonly country: string;
+      readonly currency: string;
+      readonly bankCode: string;
+      readonly accountNumber: string;
+      readonly accountName?: string;
+    }
+  | {
+      readonly type: "mobile_money";
+      readonly country: string;
+      readonly currency: string;
+      readonly network: string;
+      readonly phoneNumber: string;
+      readonly accountName?: string;
+    };
+
+export interface PaymentCustomer {
+  readonly email: string;
+  readonly name?: string;
+  readonly phone?: string;
+}
+
 export interface CreateProviderAccountInput {
   readonly merchantId: string;
   readonly displayName: string;
   readonly country: string;
   readonly currency: string;
   readonly externalReference: string;
+  readonly settlementDestination: SettlementDestination;
 }
 
 export interface CreatePaymentInput {
@@ -59,7 +84,22 @@ export interface CreatePaymentInput {
   readonly externalReference: string;
   readonly amount: Money;
   readonly channel: PaymentChannel;
+  readonly customer: PaymentCustomer;
+  readonly redirectUrl: string;
   readonly allocations?: readonly PaymentAllocation[];
+}
+
+export interface VerifyPaymentInput {
+  readonly externalReference: string;
+}
+
+export interface PaymentVerification {
+  readonly externalReference: string;
+  readonly providerReference: string;
+  readonly status: Payment["status"];
+  readonly amount: Money;
+  readonly verifiedAt: string;
+  readonly providerMetadata?: Readonly<Record<string, unknown>>;
 }
 
 export interface CreateRefundInput {
@@ -105,6 +145,11 @@ export interface ProviderConnector {
     input: CreatePaymentInput,
     context: ProviderOperationContext
   ): Promise<ProviderResult<Payment>>;
+
+  verifyPayment(
+    input: VerifyPaymentInput,
+    context: ProviderOperationContext
+  ): Promise<ProviderResult<PaymentVerification>>;
 
   createRefund(
     input: CreateRefundInput,
