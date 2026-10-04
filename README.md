@@ -53,7 +53,7 @@ The PSP remains responsible for actual payment collection and settlement. This s
 - TypeScript SDK;
 - Zamari as first real consumer.
 
-See [RAIDER audit](docs/RAIDER-AUDIT.md), [provider capability contract](docs/provider-contract.md), [payment state machine](docs/payment-state-machine.md), [security threat model](docs/security/threat-model.md), [Flutterwave Cameroon feasibility](docs/providers/flutterwave-cameroon.md), [CinetPay Cameroon / White Label feasibility](docs/providers/cinetpay-cameroon.md) and [ecosystem audit](docs/ecosystem-audit.md).
+See [RAIDER audit](docs/RAIDER-AUDIT.md), [provider capability contract](docs/provider-contract.md), [payment state machine](docs/payment-state-machine.md), [security threat model](docs/security/threat-model.md), [Flutterwave Cameroon feasibility](docs/providers/flutterwave-cameroon.md), [CinetPay Cameroon / White Label feasibility](docs/providers/cinetpay-cameroon.md), [Notch Pay Sync capability audit](docs/providers/notchpay-sync.md) and [ecosystem audit](docs/ecosystem-audit.md).
 
 ## Runtime
 
