@@ -21,7 +21,9 @@ export function runProviderContractSuite(
       merchantId: "merchant-1",
       externalReference: "payment-1",
       amount: createMoney(10_000, fixture.supportedContext.currency),
-      channel: "other"
+      channel: "card",
+      customer: { email: "buyer@example.com" },
+      redirectUrl: "https://example.com/payment-return"
     }, fixture.supportedContext);
 
     assert.equal(result.ok, true);
@@ -35,7 +37,9 @@ export function runProviderContractSuite(
       merchantId: "merchant-1",
       externalReference: "payment-2",
       amount: createMoney(10_000, fixture.unsupportedContext.currency),
-      channel: "other"
+      channel: "card",
+      customer: { email: "buyer@example.com" },
+      redirectUrl: "https://example.com/payment-return"
     }, fixture.unsupportedContext);
 
     assert.equal(result.ok, false);
@@ -55,10 +59,24 @@ export function runProviderContractSuite(
       merchantId: "merchant-1",
       externalReference: "payment-3",
       amount: createMoney(10_000, fixture.supportedContext.currency),
-      channel: "mobile_money"
+      channel: "mobile_money",
+      customer: { email: "buyer@example.com" },
+      redirectUrl: "https://example.com/payment-return"
     }, fixture.supportedContext);
 
     assert.equal(result.ok, true);
+  });
+
+  test(`${name}: verification is part of the provider contract`, async () => {
+    const connector = fixture.createConnector();
+
+    const result = await connector.verifyPayment({
+      externalReference: "payment-1"
+    }, fixture.supportedContext);
+
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    assert.equal(result.value.externalReference, "payment-1");
   });
 
   test(`${name}: marketplace account operation is capability-gated`, async () => {
@@ -69,7 +87,18 @@ export function runProviderContractSuite(
       displayName: "Merchant One",
       country: fixture.supportedContext.country,
       currency: fixture.supportedContext.currency,
-      externalReference: "merchant-1"
+      externalReference: "merchant-1",
+      settlementDestination: {
+        type: "bank_account",
+        country: fixture.supportedContext.country,
+        currency: fixture.supportedContext.currency,
+        bankCode: "TESTBANK",
+        accountNumber: "0000000001"
+      },
+      contact: {
+        email: "merchant@example.com",
+        phone: "237600000000"
+      }
     }, fixture.supportedContext);
 
     assert.equal(result.ok, true);
