@@ -82,6 +82,7 @@ export class MockProviderConnector implements ProviderConnector {
         status: "pending",
         externalReference: input.externalReference,
         providerReference: providerRef("payment", input.externalReference),
+        version: 1,
         createdAt: now(),
         updatedAt: now()
       }

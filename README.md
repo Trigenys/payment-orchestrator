@@ -53,7 +53,7 @@ The PSP remains responsible for actual payment collection and settlement. This s
 - TypeScript SDK;
 - Zamari as first real consumer.
 
-See [RAIDER audit](docs/RAIDER-AUDIT.md), [provider capability contract](docs/provider-contract.md) and [ecosystem audit](docs/ecosystem-audit.md).
+See [RAIDER audit](docs/RAIDER-AUDIT.md), [provider capability contract](docs/provider-contract.md), [payment state machine](docs/payment-state-machine.md) and [ecosystem audit](docs/ecosystem-audit.md).
 
 ## Runtime
 
