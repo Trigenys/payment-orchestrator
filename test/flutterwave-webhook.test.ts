@@ -68,7 +68,7 @@ test("Flutterwave v3 charge.completed normalizes without provider-specific statu
   assert.equal(verification.ok, true);
   if (!verification.ok) return;
 
-  const event = await adapter.normalize(raw, verification);
+  const event = await adapter.normalize(raw);
 
   assert.equal(event.provider, "flutterwave-v3");
   assert.equal(event.providerPaymentReference, "zamari-payment-1");
@@ -90,10 +90,7 @@ test("unsupported Flutterwave statuses fail instead of being guessed", async () 
   });
 
   await assert.rejects(
-    () => adapter.normalize(raw, {
-      ok: true,
-      matchedSecretReferenceId: secret.reference.id
-    }),
+    () => adapter.normalize(raw),
     /Unsupported Flutterwave transaction status/
   );
 });
