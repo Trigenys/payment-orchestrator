@@ -7,6 +7,7 @@ export interface ProviderContractFixture {
   readonly createConnector: () => ProviderConnector;
   readonly supportedContext: ProviderOperationContext;
   readonly unsupportedContext: ProviderOperationContext;
+  readonly marketplaceAccountsExpected?: "supported" | "unsupported";
 }
 
 export function runProviderContractSuite(
@@ -79,7 +80,7 @@ export function runProviderContractSuite(
     assert.equal(result.value.externalReference, "payment-1");
   });
 
-  test(`${name}: marketplace account operation is capability-gated`, async () => {
+  test(`${name}: marketplace account operation follows advertised capability`, async () => {
     const connector = fixture.createConnector();
 
     const result = await connector.createProviderAccount({
@@ -101,6 +102,15 @@ export function runProviderContractSuite(
       }
     }, fixture.supportedContext);
 
-    assert.equal(result.ok, true);
+    const expectation = fixture.marketplaceAccountsExpected ?? "supported";
+
+    if (expectation === "supported") {
+      assert.equal(result.ok, true);
+      return;
+    }
+
+    assert.equal(result.ok, false);
+    if (result.ok) return;
+    assert.equal(result.error.code, "capability_unsupported");
   });
 }
