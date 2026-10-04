@@ -16,7 +16,9 @@ import {
   type Payout,
   type ProviderConnector,
   type ProviderOperationContext,
-  type ProviderResult
+  type ProviderResult,
+  type PaymentVerification,
+  type VerifyPaymentInput
 } from "./contracts.js";
 import type { ProviderCapabilityProfile } from "./capabilities.js";
 
@@ -85,6 +87,28 @@ export class MockProviderConnector implements ProviderConnector {
         version: 1,
         createdAt: now(),
         updatedAt: now()
+      }
+    };
+  }
+
+  async verifyPayment(
+    input: VerifyPaymentInput,
+    context: ProviderOperationContext
+  ): Promise<ProviderResult<PaymentVerification>> {
+    const gate = gateCapabilities(this.profile, ["collect"], context);
+    if (!gate.ok) return gate;
+
+    return {
+      ok: true,
+      value: {
+        externalReference: input.externalReference,
+        providerReference: providerRef("payment", input.externalReference),
+        status: "succeeded",
+        amount: {
+          amountMinor: 0,
+          currency: context.currency.toUpperCase()
+        },
+        verifiedAt: now()
       }
     };
   }
