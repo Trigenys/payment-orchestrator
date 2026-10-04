@@ -69,6 +69,7 @@ export interface PaymentEventSink {
 
 export type WebhookIngressErrorCode =
   | "PROVIDER_MISMATCH"
+  | "BODY_TOO_LARGE"
   | "RATE_LIMITED"
   | "CREDENTIAL_BINDING_NOT_FOUND"
   | "CREDENTIAL_RESOLUTION_FAILED"
@@ -98,12 +99,24 @@ export interface WebhookIngressDependencies {
   readonly credentialResolver: ProviderCredentialResolver;
   readonly paymentEventSink: PaymentEventSink;
   readonly rateLimiter?: RateLimiter;
+  readonly maxBodyBytes?: number;
 }
 
 export class WebhookIngressService {
   constructor(private readonly dependencies: WebhookIngressDependencies) {}
 
   async ingest(request: RawWebhookRequest): Promise<WebhookIngressResult> {
+    const maxBodyBytes = this.dependencies.maxBodyBytes ?? 1_048_576;
+    if (request.rawBody.byteLength > maxBodyBytes) {
+      return {
+        ok: false,
+        error: {
+          code: "BODY_TOO_LARGE",
+          message: "Webhook body exceeds the configured size limit."
+        }
+      };
+    }
+
     const expectedProvider = this.dependencies.adapter.provider
       .trim()
       .toLowerCase();
