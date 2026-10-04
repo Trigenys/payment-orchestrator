@@ -94,6 +94,10 @@ export function runProviderContractSuite(
         currency: fixture.supportedContext.currency,
         bankCode: "TESTBANK",
         accountNumber: "0000000001"
+      },
+      contact: {
+        email: "merchant@example.com",
+        phone: "237600000000"
       }
     }, fixture.supportedContext);
 
