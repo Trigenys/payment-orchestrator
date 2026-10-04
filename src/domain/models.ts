@@ -50,7 +50,10 @@ export interface Payment {
   readonly amount: Money;
   readonly status: PaymentStatus;
   readonly externalReference: string;
+  readonly provider?: string;
+  readonly providerEnvironment?: "sandbox" | "live";
   readonly providerReference?: string;
+  readonly version: number;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly providerMetadata?: Readonly<Record<string, unknown>>;
