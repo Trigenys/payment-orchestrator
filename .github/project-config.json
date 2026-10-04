@@ -9,7 +9,14 @@
     "createBoardView": true
   },
   "bootstrap": {
-    "boardViewName": "AppFactory Board",
-    "phases": ["Foundation", "API Contract", "Integrations", "Hardening", "Production"]
+    "boardViewName": "Payment Orchestrator Board",
+    "phases": [
+      "Foundation",
+      "Provider Contract",
+      "Marketplace Payments",
+      "Reliability",
+      "Pilot",
+      "Production"
+    ]
   }
 }
