@@ -1,12 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createMoney } from "../../src/domain/money.js";
-import type { ProviderConnector, ProviderOperationContext } from "../../src/providers/contracts.js";
+import type {
+  PaymentChannel,
+  ProviderConnector,
+  ProviderOperationContext
+} from "../../src/providers/contracts.js";
 
 export interface ProviderContractFixture {
   readonly createConnector: () => ProviderConnector;
   readonly supportedContext: ProviderOperationContext;
   readonly unsupportedContext: ProviderOperationContext;
+  readonly collectionChannel?: PaymentChannel;
+  readonly marketplaceAccountsExpected?: "supported" | "unsupported";
 }
 
 export function runProviderContractSuite(
@@ -21,7 +27,7 @@ export function runProviderContractSuite(
       merchantId: "merchant-1",
       externalReference: "payment-1",
       amount: createMoney(10_000, fixture.supportedContext.currency),
-      channel: "card",
+      channel: fixture.collectionChannel ?? "card",
       customer: { email: "buyer@example.com" },
       redirectUrl: "https://example.com/payment-return"
     }, fixture.supportedContext);
@@ -37,7 +43,7 @@ export function runProviderContractSuite(
       merchantId: "merchant-1",
       externalReference: "payment-2",
       amount: createMoney(10_000, fixture.unsupportedContext.currency),
-      channel: "card",
+      channel: fixture.collectionChannel ?? "card",
       customer: { email: "buyer@example.com" },
       redirectUrl: "https://example.com/payment-return"
     }, fixture.unsupportedContext);
@@ -79,7 +85,7 @@ export function runProviderContractSuite(
     assert.equal(result.value.externalReference, "payment-1");
   });
 
-  test(`${name}: marketplace account operation is capability-gated`, async () => {
+  test(`${name}: marketplace account operation follows advertised capability`, async () => {
     const connector = fixture.createConnector();
 
     const result = await connector.createProviderAccount({
@@ -101,6 +107,15 @@ export function runProviderContractSuite(
       }
     }, fixture.supportedContext);
 
-    assert.equal(result.ok, true);
+    const expectation = fixture.marketplaceAccountsExpected ?? "supported";
+
+    if (expectation === "supported") {
+      assert.equal(result.ok, true);
+      return;
+    }
+
+    assert.equal(result.ok, false);
+    if (result.ok) return;
+    assert.equal(result.error.code, "capability_unsupported");
   });
 }
