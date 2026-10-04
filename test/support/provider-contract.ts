@@ -21,7 +21,7 @@ export function runProviderContractSuite(
       merchantId: "merchant-1",
       externalReference: "payment-1",
       amount: createMoney(10_000, fixture.supportedContext.currency),
-      channel: "other",
+      channel: "card",
       customer: { email: "buyer@example.com" },
       redirectUrl: "https://example.com/payment-return"
     }, fixture.supportedContext);
@@ -37,7 +37,7 @@ export function runProviderContractSuite(
       merchantId: "merchant-1",
       externalReference: "payment-2",
       amount: createMoney(10_000, fixture.unsupportedContext.currency),
-      channel: "other",
+      channel: "card",
       customer: { email: "buyer@example.com" },
       redirectUrl: "https://example.com/payment-return"
     }, fixture.unsupportedContext);
