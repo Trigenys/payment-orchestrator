@@ -59,6 +59,18 @@ export function providerBindingKey(
   ].join("\u0000");
 }
 
+export function providerEventKey(
+  provider: string,
+  environment: ProviderEnvironment,
+  eventId: string
+): string {
+  return [
+    provider.trim().toLowerCase(),
+    environment,
+    eventId.trim()
+  ].join("\u0000");
+}
+
 function cloneState(state: InMemoryState): InMemoryState {
   return {
     payments: new Map(state.payments),
