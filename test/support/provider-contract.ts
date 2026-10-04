@@ -1,12 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createMoney } from "../../src/domain/money.js";
-import type { ProviderConnector, ProviderOperationContext } from "../../src/providers/contracts.js";
+import type {
+  PaymentChannel,
+  ProviderConnector,
+  ProviderOperationContext
+} from "../../src/providers/contracts.js";
 
 export interface ProviderContractFixture {
   readonly createConnector: () => ProviderConnector;
   readonly supportedContext: ProviderOperationContext;
   readonly unsupportedContext: ProviderOperationContext;
+  readonly collectionChannel?: PaymentChannel;
   readonly marketplaceAccountsExpected?: "supported" | "unsupported";
 }
 
@@ -22,7 +27,7 @@ export function runProviderContractSuite(
       merchantId: "merchant-1",
       externalReference: "payment-1",
       amount: createMoney(10_000, fixture.supportedContext.currency),
-      channel: "card",
+      channel: fixture.collectionChannel ?? "card",
       customer: { email: "buyer@example.com" },
       redirectUrl: "https://example.com/payment-return"
     }, fixture.supportedContext);
@@ -38,7 +43,7 @@ export function runProviderContractSuite(
       merchantId: "merchant-1",
       externalReference: "payment-2",
       amount: createMoney(10_000, fixture.unsupportedContext.currency),
-      channel: "card",
+      channel: fixture.collectionChannel ?? "card",
       customer: { email: "buyer@example.com" },
       redirectUrl: "https://example.com/payment-return"
     }, fixture.unsupportedContext);
