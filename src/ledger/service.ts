@@ -7,6 +7,7 @@ import type {
   LedgerEntry,
   LedgerEntryKind,
   LedgerResult,
+  ObservePayoutInput,
   ObserveSettlementInput,
   RecordAdjustmentInput,
   RecordPaymentBreakdownInput,
@@ -211,6 +212,25 @@ export class LedgerService {
         kind: "settlement_observed",
         amount: input.amount,
         settlementStatus: input.status
+      }],
+      provider: input.provider,
+      providerReference: input.providerReference,
+      occurredAt: input.occurredAt,
+      metadata: input.metadata
+    });
+  }
+
+  async observePayout(
+    input: ObservePayoutInput
+  ): Promise<LedgerResult<AppendLedgerSuccess>> {
+    return this.appendEvidence({
+      projectId: input.projectId,
+      merchantId: input.merchantId,
+      paymentId: input.paymentId,
+      sourceKey: input.sourceKey,
+      components: [{
+        kind: "payout_observed",
+        amount: input.amount
       }],
       provider: input.provider,
       providerReference: input.providerReference,
