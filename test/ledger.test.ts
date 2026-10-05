@@ -254,3 +254,25 @@ test("settlement observations are append-only status evidence", async () => {
     "in_transit"
   );
 });
+
+
+test("payout observations are append-only evidence", async () => {
+  const { service } = fixture();
+
+  const result = await service.observePayout({
+    projectId: "project-zamari",
+    merchantId: "merchant-centre-a",
+    paymentId: "payment-1",
+    sourceKey: "payout:payout-1:observed:v1",
+    amount: createMoney(47_500, "XAF"),
+    provider: "provider-a",
+    providerReference: "provider-payout-1",
+    occurredAt: "2026-10-05T08:15:00.000Z"
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+
+  assert.equal(result.value.entries[0]?.kind, "payout_observed");
+  assert.equal(result.value.entries[0]?.amount.amountMinor, 47_500);
+});
