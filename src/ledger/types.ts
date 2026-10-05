@@ -124,3 +124,16 @@ export interface ObserveSettlementInput {
   readonly occurredAt: string;
   readonly metadata?: Readonly<Record<string, unknown>>;
 }
+
+
+export interface ObservePayoutInput {
+  readonly projectId: string;
+  readonly merchantId: string;
+  readonly paymentId?: string;
+  readonly sourceKey: string;
+  readonly amount: Money;
+  readonly provider: string;
+  readonly providerReference?: string;
+  readonly occurredAt: string;
+  readonly metadata?: Readonly<Record<string, unknown>>;
+}
