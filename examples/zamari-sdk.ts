@@ -14,6 +14,7 @@ export async function startEnrollmentPayment(input: {
   merchantId: string;
   learnerEmail: string;
   amountXaf: number;
+  paymentAttemptId: string;
 }) {
   return payments.payments.create({
     merchantId: input.merchantId,
@@ -27,10 +28,9 @@ export async function startEnrollmentPayment(input: {
     },
     redirectUrl: "https://zamari.example/payments/return"
   }, {
-    // In a real Zamari integration, persist a stable key with the
-    // enrollment/payment attempt instead of generating a new key on every retry.
-    idempotencyKey: createIdempotencyKey(
-      `zamari-${input.enrollmentId}`
-    )
+    // Stable for this logical payment attempt. Reuse this exact value
+    // whenever Zamari retries the same attempt.
+    idempotencyKey:
+      `zamari-${input.enrollmentId}-${input.paymentAttemptId}`
   });
 }
