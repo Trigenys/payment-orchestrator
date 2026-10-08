@@ -11,10 +11,15 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "test": "npm run build && node --test dist/test/*.test.js",
-    "check": "npm run typecheck && npm test"
+    "check": "npm run typecheck && npm test && npm run check:contracts && npm run check:sdk",
+    "check:contracts": "npm run check --workspace @trigenys/payments-contracts",
+    "check:sdk": "npm run check --workspace @trigenys/payments"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "typescript": "^5.8.0"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }
