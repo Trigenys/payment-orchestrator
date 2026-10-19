@@ -1,11 +1,5 @@
 import { Pool } from "pg";
-import { reserveFapshiSandboxStatusRead } from "../api/fapshi-status-budget.js";
-import { FapshiHostedClient } from "../providers/fapshi/client.js";
-import { FapshiHostedConnector } from "../providers/fapshi/connector.js";
-import { FetchProviderHttpClient } from "../providers/http.js";
-import { FapshiSandboxConfirmation } from "../storage/postgres/fapshi-confirmation.js";
-import { FapshiInboxWorker } from "./fapshi-inbox-worker.js";
-import { PostgresInboxWorkerStore } from "./inbox-persistence.js";
+import { createSandboxInboxWorker, isInboxSchemaReady } from "./runtime.js";
 import { createInboxWorkerServer } from "./server.js";
 
 /**
@@ -32,41 +26,11 @@ const apiuser = required("FAPSHI_SANDBOX_APIUSER");
 const apikey = required("FAPSHI_SANDBOX_APIKEY");
 
 const pool = new Pool({ connectionString, max: 5 });
-const connector = new FapshiHostedConnector({
-  client: new FapshiHostedClient({
-    httpClient: new FetchProviderHttpClient(),
-    getCredentials: async () => ({ apiuser, apikey })
-  }),
-  projectId, merchantId, expectedServiceName: serviceName
+const worker = createSandboxInboxWorker(pool, {
+  projectId, merchantId, serviceName, apiuser, apikey
 });
-
-const worker = new FapshiInboxWorker({
-  projectId, merchantId,
-  store: new PostgresInboxWorkerStore(pool, serviceName),
-  confirmation: new FapshiSandboxConfirmation({
-    pool, projectId, merchantId, expectedServiceName: serviceName, connector
-  }),
-  reserveStatusRead: providerReference =>
-    reserveFapshiSandboxStatusRead(pool, providerReference)
-});
-
 const ready = async (): Promise<boolean> => {
-  try {
-    const result = await pool.query<{ n: number }>(
-      `SELECT COUNT(DISTINCT version)::int AS n
-       FROM schema_migrations WHERE version = ANY($1::text[])`,
-      [[
-        "001_payment_core",
-        "002_financial_persistence",
-        "003_message_delivery",
-        "004_fapshi_verify_budget",
-        "005_inbox_worker"
-      ]]
-    );
-    return result.rows[0]?.n === 5;
-  } catch {
-    return false;
-  }
+  try { return await isInboxSchemaReady(pool); } catch { return false; }
 };
 
 const server = createInboxWorkerServer({ worker, ready });
