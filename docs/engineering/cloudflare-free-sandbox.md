@@ -56,6 +56,10 @@ is cache-disabled and uses the restricted `payments_worker` role.
 Database connectivity does not validate the payment processor CPU budget,
 actual PSP sandbox calls, event delivery to Précis or live readiness.
 
+The later deployed simulated-provider test confirmed one-time financial effects
+but measured 35/22 ms CPU, exceeding Workers Free's 10 ms budget. The processing
+adapter remains disabled; see [the measured runtime report](cloudflare-inbox-runtime.md).
+
 ## Next gates before turning on any sandbox processing
 
 1. Confirm no paid add-on is activated. Set up a separate project in
