@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { handleCloudflareProbe } from "../src/cloudflare/probe.js";
 
-test("Cloudflare diagnostic never exposes payments or an active backend", () => {
+test("Cloudflare diagnostic never exposes payments or an active backend", async () => {
   const url = "https://example.workers.dev";
   const ok = handleCloudflareProbe(new Request(url + "/health"));
   assert.equal(ok.status, 200);
   assert.equal(ok.headers.get("cache-control"), "no-store");
-  const parsed = JSON.parse(String(ok.body ? "" : "{}"));
-  assert.equal(typeof parsed, "object");
+  const parsed = await ok.json() as { paymentsEnabled: boolean; databaseConnected: boolean };
+  assert.equal(parsed.paymentsEnabled, false);
+  assert.equal(parsed.databaseConnected, false);
 });
 
 test("Cloudflare readiness is intentionally 503 and money routes are 404", async () => {
