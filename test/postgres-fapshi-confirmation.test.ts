@@ -106,7 +106,7 @@ test("Fapshi authenticated status -> payment/ledger/outbox is one SQL transactio
       const providerReference = `fapshi-${suffix}-${index}`;
       const bound = await paymentService.bindProviderReference({
         paymentId: created.value.payment.id,
-        provider: "fapshi", environment: "sandbox", providerPaymentReference
+        provider: "fapshi", environment: "sandbox", providerPaymentReference: providerReference
       });
       assert.equal(bound.ok, true);
       stub.responses.set(providerReference, { externalId: reference, amount: 150 });
