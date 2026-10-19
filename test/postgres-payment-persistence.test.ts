@@ -153,12 +153,14 @@ test("PostgreSQL payment persistence: real database contract", {
     });
 
     await t.test("foreign keys prevent phantom merchants", async () => {
-      const other = await one.createPayment({
-        ...command(`bad-merchant-${suffix}`),
-        merchantId: "nonexistent-merchant"
-      });
-      // A database invariant throws, not a fake successful payment.
-      assert.equal(other.ok, false);
+      // FK failures deliberately abort the transaction.
+      await assert.rejects(
+        one.createPayment({
+          ...command(`bad-merchant-${suffix}`),
+          merchantId: "nonexistent-merchant"
+        }),
+        /foreign key constraint/
+      );
     });
   } finally {
     await Promise.all([pool.end(), secondPool.end()]);
