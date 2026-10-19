@@ -3,6 +3,8 @@ export interface ProviderHttpRequest {
   readonly url: string;
   readonly headers?: Readonly<Record<string, string>>;
   readonly body?: unknown;
+  /** Optional hard deadline for a provider call; no change for existing callers. */
+  readonly timeoutMs?: number;
 }
 
 export interface ProviderHttpResponse<T = unknown> {
@@ -23,6 +25,9 @@ export class FetchProviderHttpClient implements ProviderHttpClient {
     const response = await fetch(request.url, {
       method: request.method,
       headers: request.headers,
+      signal: request.timeoutMs === undefined
+        ? undefined
+        : AbortSignal.timeout(request.timeoutMs),
       body: request.body === undefined
         ? undefined
         : JSON.stringify(request.body)
