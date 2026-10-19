@@ -324,7 +324,8 @@ export class LedgerService {
             merchantId: input.merchantId,
             paymentId: input.paymentId
           }))
-          .filter((entry) => entry.batchId === existing.id);
+          .filter((entry) => entry.batchId === existing.id)
+          .sort((a, b) => existing.entryIds.indexOf(a.id) - existing.entryIds.indexOf(b.id));
 
         return {
           ok: true,
