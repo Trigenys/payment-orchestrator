@@ -7,26 +7,28 @@ import type {
   ProviderReferenceBinding
 } from "./types.js";
 
-export interface PaymentTransaction {
-  getPayment(paymentId: string): Payment | undefined;
-  putPayment(payment: Payment): void;
+export type MaybePromise<T> = T | Promise<T>;
 
-  getCreation(projectId: string, idempotencyKey: string): PaymentCreationReservation | undefined;
-  putCreation(reservation: PaymentCreationReservation): void;
+export interface PaymentTransaction {
+  getPayment(paymentId: string): MaybePromise<Payment | undefined>;
+  putPayment(payment: Payment): MaybePromise<void>;
+
+  getCreation(projectId: string, idempotencyKey: string): MaybePromise<PaymentCreationReservation | undefined>;
+  putCreation(reservation: PaymentCreationReservation): MaybePromise<void>;
 
   getProviderBinding(
     provider: string,
     environment: ProviderEnvironment,
     providerPaymentReference: string
-  ): ProviderReferenceBinding | undefined;
-  putProviderBinding(binding: ProviderReferenceBinding): void;
+  ): MaybePromise<ProviderReferenceBinding | undefined>;
+  putProviderBinding(binding: ProviderReferenceBinding): MaybePromise<void>;
 
-  getProviderEvent(key: string): ProviderEventReceipt | undefined;
-  putProviderEvent(receipt: ProviderEventReceipt): void;
+  getProviderEvent(key: string): MaybePromise<ProviderEventReceipt | undefined>;
+  putProviderEvent(receipt: ProviderEventReceipt): MaybePromise<void>;
 
-  putTransition(transition: PaymentTransitionEvidence): void;
-  listTransitions(paymentId: string): readonly PaymentTransitionEvidence[];
-  listProviderEvents(paymentId: string): readonly ProviderEventReceipt[];
+  putTransition(transition: PaymentTransitionEvidence): MaybePromise<void>;
+  listTransitions(paymentId: string): MaybePromise<readonly PaymentTransitionEvidence[]>;
+  listProviderEvents(paymentId: string): MaybePromise<readonly ProviderEventReceipt[]>;
 }
 
 export interface PaymentPersistence {
