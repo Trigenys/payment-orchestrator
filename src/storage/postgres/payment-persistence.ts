@@ -30,7 +30,7 @@ import type {
  * PostgreSQL must be migrated and project/merchant identities provisioned
  * BEFORE the PaymentService creates any intent.
  */
-class PostgresPaymentTransaction implements PaymentTransaction {
+export class PostgresPaymentTransaction implements PaymentTransaction {
   constructor(private readonly client: PoolClient) {}
 
   async getPayment(paymentId: string): Promise<Payment | undefined> {

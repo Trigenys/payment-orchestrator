@@ -6,7 +6,7 @@ import type { LedgerBatch, LedgerEntry, LedgerScope } from "../../ledger/types.j
  * Financial evidence is append-only. Every batch is transactional and keyed
  * by (projectId, sourceKey), so duplicate worker invocations return a replay.
  */
-class PostgresLedgerTransaction implements LedgerTransaction {
+export class PostgresLedgerTransaction implements LedgerTransaction {
   constructor(private readonly client: PoolClient) {}
 
   async getBatch(projectId: string, sourceKey: string): Promise<LedgerBatch | undefined> {
