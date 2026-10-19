@@ -4,3 +4,4 @@ export * from "./mock-connector.js";
 export * from "./http.js";
 export * from "./flutterwave/index.js";
 export * from "./cinetpay/index.js";
+export * from "./fapshi/index.js";
