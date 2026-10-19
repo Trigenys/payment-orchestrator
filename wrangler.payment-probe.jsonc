@@ -1,8 +1,13 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "trigenys-payment-sandbox-probe",
-  "main": "src/cloudflare/probe.ts",
+  "main": "src/cloudflare/database-probe.ts",
   "compatibility_date": "2026-10-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "hyperdrive": [
+    { "binding": "HYPERDRIVE", "id": "69ba92e2d6ea449291589309b8184f6d" }
+  ],
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
   "workers_dev": true,
   "triggers": {
     "crons": []
