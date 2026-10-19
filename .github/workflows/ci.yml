@@ -48,3 +48,9 @@ jobs:
       - run: npm run build
       - run: npm run db:migrate
       - run: node --test dist/test/postgres-*.test.js
+
+  worker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -f Dockerfile.worker -t payment-inbox-worker:ci .
