@@ -175,7 +175,8 @@ test("Fapshi authenticated status -> payment/ledger/outbox is one SQL transactio
       });
       stub.providerStatus = "SUCCESSFUL";
       stub.serviceName = "wrong-service";
-      await assert.rejects(firstCoordinator.confirm(paymentId), /does not match/);
+      // The connector rejects this before the transactional coordinator runs.
+      await assert.rejects(firstCoordinator.confirm(paymentId), /status verification failed: provider_rejected/);
       stub.serviceName = "trigenys-sandbox-precis";
       stub.responses.set(providerReference, { externalId: "other-purchase", amount: 150 });
       await assert.rejects(firstCoordinator.confirm(paymentId), /does not match/);
