@@ -74,8 +74,8 @@ export class PaymentService {
 
     const fingerprint = paymentCreationFingerprint(command);
 
-    return this.dependencies.persistence.transaction((transaction) => {
-      const existing = transaction.getCreation(
+    return this.dependencies.persistence.transaction(async (transaction) => {
+      const existing = await transaction.getCreation(
         command.projectId,
         command.idempotencyKey
       );
@@ -96,7 +96,7 @@ export class PaymentService {
           };
         }
 
-        const payment = transaction.getPayment(existing.paymentId);
+        const payment = await transaction.getPayment(existing.paymentId);
         if (!payment) {
           throw new Error(
             `Invariant violation: payment "${existing.paymentId}" is missing for an idempotency reservation.`
@@ -126,8 +126,8 @@ export class PaymentService {
         updatedAt: createdAt
       };
 
-      transaction.putPayment(payment);
-      transaction.putCreation({
+      await transaction.putPayment(payment);
+      await transaction.putCreation({
         projectId: command.projectId,
         idempotencyKey: command.idempotencyKey,
         fingerprint,
@@ -145,7 +145,7 @@ export class PaymentService {
         occurredAt: createdAt,
         recordedAt: createdAt
       };
-      transaction.putTransition(transition);
+      await transaction.putTransition(transition);
 
       return {
         ok: true,
@@ -169,8 +169,8 @@ export class PaymentService {
       if (!validation.ok) return validation;
     }
 
-    return this.dependencies.persistence.transaction((transaction) => {
-      const payment = transaction.getPayment(input.paymentId);
+    return this.dependencies.persistence.transaction(async (transaction) => {
+      const payment = await transaction.getPayment(input.paymentId);
       if (!payment) {
         return {
           ok: false,
@@ -181,7 +181,7 @@ export class PaymentService {
         };
       }
 
-      const existingBinding = transaction.getProviderBinding(
+      const existingBinding = await transaction.getProviderBinding(
         input.provider,
         input.environment,
         input.providerPaymentReference
@@ -237,14 +237,14 @@ export class PaymentService {
         updatedAt: boundAt
       };
 
-      transaction.putProviderBinding({
+      await transaction.putProviderBinding({
         provider: input.provider,
         environment: input.environment,
         providerPaymentReference: input.providerPaymentReference,
         paymentId: payment.id,
         boundAt
       });
-      transaction.putPayment(updated);
+      await transaction.putPayment(updated);
 
       return {
         ok: true,
@@ -277,8 +277,8 @@ export class PaymentService {
     const fingerprint = providerEventFingerprint(event);
     const receivedAt = event.receivedAt ?? this.now();
 
-    return this.dependencies.persistence.transaction((transaction) => {
-      const existingReceipt = transaction.getProviderEvent(key);
+    return this.dependencies.persistence.transaction(async (transaction) => {
+      const existingReceipt = await transaction.getProviderEvent(key);
       if (existingReceipt) {
         if (existingReceipt.fingerprint !== fingerprint) {
           return {
@@ -300,14 +300,14 @@ export class PaymentService {
           value: {
             receipt: existingReceipt,
             payment: existingReceipt.paymentId
-              ? transaction.getPayment(existingReceipt.paymentId)
+              ? await transaction.getPayment(existingReceipt.paymentId)
               : undefined,
             replayed: true
           }
         };
       }
 
-      const binding = transaction.getProviderBinding(
+      const binding = await transaction.getProviderBinding(
         event.provider,
         event.environment,
         event.providerPaymentReference
@@ -327,7 +327,7 @@ export class PaymentService {
           receivedAt,
           reason: "No payment is bound to the provider reference."
         };
-        transaction.putProviderEvent(receipt);
+        await transaction.putProviderEvent(receipt);
 
         return {
           ok: true,
@@ -338,7 +338,7 @@ export class PaymentService {
         };
       }
 
-      const payment = transaction.getPayment(binding.paymentId);
+      const payment = await transaction.getPayment(binding.paymentId);
       if (!payment) {
         throw new Error(
           `Invariant violation: payment "${binding.paymentId}" is missing for a provider reference binding.`
@@ -381,9 +381,9 @@ export class PaymentService {
           receivedAt
         };
 
-        transaction.putPayment(updated);
-        transaction.putTransition(transition);
-        transaction.putProviderEvent(receipt);
+        await transaction.putPayment(updated);
+        await transaction.putTransition(transition);
+        await transaction.putProviderEvent(receipt);
 
         return {
           ok: true,
@@ -416,7 +416,7 @@ export class PaymentService {
         receivedAt,
         reason: decision.reason
       };
-      transaction.putProviderEvent(receipt);
+      await transaction.putProviderEvent(receipt);
 
       return {
         ok: true,
@@ -432,8 +432,8 @@ export class PaymentService {
   async getPaymentAudit(
     paymentId: string
   ): Promise<PaymentCommandResult<PaymentAudit>> {
-    return this.dependencies.persistence.transaction((transaction) => {
-      const payment = transaction.getPayment(paymentId);
+    return this.dependencies.persistence.transaction(async (transaction) => {
+      const payment = await transaction.getPayment(paymentId);
       if (!payment) {
         return {
           ok: false,
@@ -448,8 +448,8 @@ export class PaymentService {
         ok: true,
         value: {
           payment,
-          transitions: transaction.listTransitions(paymentId),
-          providerEvents: transaction.listProviderEvents(paymentId)
+          transitions: await transaction.listTransitions(paymentId),
+          providerEvents: await transaction.listProviderEvents(paymentId)
         }
       };
     });

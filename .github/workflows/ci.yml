@@ -19,3 +19,32 @@ jobs:
           node-version: 24
       - run: npm install --ignore-scripts
       - run: npm run check
+
+  postgres-contract:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: trigenys_test
+          POSTGRES_PASSWORD: trigenys_test
+          POSTGRES_DB: payment_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U trigenys_test -d payment_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://trigenys_test:trigenys_test@localhost:5432/payment_test
+      POSTGRES_TEST_URL: postgresql://trigenys_test:trigenys_test@localhost:5432/payment_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm install --ignore-scripts
+      - run: npm run build
+      - run: npm run db:migrate
+      - run: node --test dist/test/postgres-payment-persistence.test.js
