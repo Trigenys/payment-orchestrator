@@ -13,13 +13,18 @@
     "test": "npm run build && node --test dist/test/*.test.js",
     "check": "npm run typecheck && npm test && npm run check:contracts && npm run check:sdk",
     "check:contracts": "npm run check --workspace @trigenys/payments-contracts",
-    "check:sdk": "npm run check --workspace @trigenys/payments"
+    "check:sdk": "npm run check --workspace @trigenys/payments",
+    "db:migrate": "node dist/src/storage/postgres/migrate.js"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "@types/pg": "^8.23.1"
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "pg": "^8.23.1"
+  }
 }
