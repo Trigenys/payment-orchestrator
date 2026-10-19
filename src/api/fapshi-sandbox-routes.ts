@@ -96,6 +96,31 @@ export function createFapshiSandboxRoutes(options: SandboxApiOptions) {
     ((transId: string) => reserveFapshiSandboxStatusRead(options.pool, transId));
 
   return async (request: IncomingMessage, response: ServerResponse): Promise<boolean> => {
+    if (request.url === "/ready") {
+      if (request.method !== "GET") {
+        json(response, 405, { error: "METHOD_NOT_ALLOWED" });
+        return true;
+      }
+      try {
+        const check = await options.pool.query<{ n: number }>(
+          `SELECT COUNT(DISTINCT version)::int AS n FROM schema_migrations
+           WHERE version = ANY($1::text[])`,
+          [[
+            "001_payment_core",
+            "002_financial_persistence",
+            "003_message_delivery",
+            "004_fapshi_verify_budget"
+          ]]
+        );
+        json(response, check.rows[0]?.n === 4 ? 200 : 503, {
+          status: check.rows[0]?.n === 4 ? "ready" : "unavailable"
+        });
+      } catch {
+        json(response, 503, { status: "unavailable" });
+      }
+      return true;
+    }
+
     if (request.url === WEBHOOK_PATH) {
       if (request.method !== "POST") {
         json(response, 405, { error: "METHOD_NOT_ALLOWED" });
