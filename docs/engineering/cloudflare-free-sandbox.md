@@ -1,6 +1,6 @@
 # Cloudflare Free sandbox bootstrap
 
-Status: **probe-only**; no payment runtime or credentials deployed.
+Status: **database diagnostic only**; no payment runtime or PSP credentials deployed.
 
 ## Why this follows the Cloud Run branch
 
@@ -25,11 +25,36 @@ Status: **probe-only**; no payment runtime or credentials deployed.
 
 Only supports:
 - GET /health -> 200 and `paymentsEnabled=false`
-- GET /ready -> 503
+- GET /ready -> 503 with a read-only database/schema connectivity check;
+  `databaseConnected=true` still means the payment runtime is disabled
 - Everything else -> 404
 
-No HTTP webhook, status verification, queue, PSP secrets, scheduled trigger,
-database binding or payment code is deployed.
+No HTTP webhook, status verification, queue, PSP secrets, scheduled trigger
+or payment processing code is deployed. The dedicated Hyperdrive binding
+is cache-disabled and uses the restricted `payments_worker` role.
+
+### Sandbox connection established — 2026-10-19
+
+- Neon project: `cool-violet-11589007`, named
+  `trigenys-payment-orchestrator-sandbox`; database `payments_sandbox`.
+- Hyperdrive: `69ba92e2d6ea449291589309b8184f6d`, query cache disabled,
+  origin connection limit 5. No other product connection is reused.
+- Repository migrations `001`–`005` applied atomically to this empty
+  sandbox; versions recorded in `schema_migrations`.
+- The Worker role has CONNECT, schema USAGE and SELECT on
+  `schema_migrations` only. It cannot create databases, roles, schemas
+  or tables and is not a member of `neon_superuser`. Grant individual
+  DML permissions only when the authenticated sandbox runtime is ready.
+- The probe reads migration versions with a bound query, bounded timeouts
+  and a per-request `pg.Client`; driver errors never leave the handler.
+- `/health` deliberately does not query the database. `/ready` is a
+  diagnostic endpoint, not proof of financial readiness. Avoid an
+  external high-frequency health checker that would keep Neon awake.
+- Regenerate binding types with
+  `npx wrangler types src/cloudflare/worker-configuration.d.ts --config wrangler.payment-probe.jsonc --env-interface PaymentProbeEnv --include-runtime=false`.
+
+Database connectivity does not validate the payment processor CPU budget,
+actual PSP sandbox calls, event delivery to Précis or live readiness.
 
 ## Next gates before turning on any sandbox processing
 
