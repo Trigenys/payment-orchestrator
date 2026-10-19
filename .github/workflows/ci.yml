@@ -54,3 +54,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: docker build -f Dockerfile.worker -t payment-inbox-worker:ci .
+
+  cloudflare-probe-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm install --ignore-scripts
+      - run: npx --yes wrangler@4 deploy --config wrangler.payment-probe.jsonc --dry-run --outdir .cf-probe-build
+        env:
+          WRANGLER_SEND_METRICS: false
