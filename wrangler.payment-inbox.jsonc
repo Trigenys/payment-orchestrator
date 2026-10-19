@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "trigenys-payment-sandbox-inbox",
+  "main": "src/cloudflare/inbox-runtime.ts",
+  "compatibility_date": "2026-10-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "hyperdrive": [
+    { "binding": "HYPERDRIVE", "id": "cc9af5ddfa4545708f876c334aba5280" }
+  ],
+  "vars": {
+    "CLOUDFLARE_SANDBOX_INBOX_ENABLED": "false",
+    "PAYMENT_SANDBOX_PROJECT_ID": "",
+    "PAYMENT_SANDBOX_MERCHANT_ID": "",
+    "FAPSHI_SANDBOX_SERVICE_NAME": ""
+  },
+  "secrets": {
+    "required": ["FAPSHI_SANDBOX_APIUSER", "FAPSHI_SANDBOX_APIKEY", "PAYMENT_SANDBOX_INTERNAL_TOKEN"]
+  },
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "workers_dev": true,
+  "triggers": { "crons": [] }
+}
