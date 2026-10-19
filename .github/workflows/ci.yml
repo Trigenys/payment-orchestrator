@@ -66,3 +66,9 @@ jobs:
       - run: npx --yes wrangler@4 deploy --config wrangler.payment-probe.jsonc --dry-run --outdir .cf-probe-build
         env:
           WRANGLER_SEND_METRICS: false
+      - run: npx wrangler deploy --config wrangler.payment-inbox.jsonc --dry-run --outdir .cf-inbox-build
+        env:
+          WRANGLER_SEND_METRICS: false
+      - run: npx wrangler deploy --config wrangler.payment-contract.jsonc --dry-run --outdir .cf-contract-build
+        env:
+          WRANGLER_SEND_METRICS: false

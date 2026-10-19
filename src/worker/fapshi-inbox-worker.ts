@@ -24,9 +24,9 @@ export interface WorkerBatchResult {
 }
 
 /**
- * Request-driven Cloud Run worker. No permanent loop or CPU-after-response.
- * A Cloud Scheduler sweep must revisit SQL-scheduled retries; Cloud Tasks
- * can trigger extra sweeps for low latency, but it is not the source of truth.
+ * Bounded request/schedule-driven worker. No permanent loop or work after an
+ * untracked response. Cloud Scheduler or Cloudflare Cron revisits SQL-scheduled
+ * retries; extra authenticated sweeps are not the source of truth.
  */
 export class FapshiInboxWorker {
   constructor(private readonly options: FapshiInboxWorkerOptions) {

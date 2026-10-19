@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "trigenys-payment-sandbox-contract-test",
+  "main": "test/support/cloudflare-inbox-contract.ts",
+  "compatibility_date": "2026-10-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "hyperdrive": [
+    { "binding": "HYPERDRIVE", "id": "cc9af5ddfa4545708f876c334aba5280" }
+  ],
+  "secrets": { "required": ["PAYMENT_SANDBOX_INTERNAL_TOKEN"] },
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "workers_dev": true,
+  "triggers": { "crons": [] }
+}

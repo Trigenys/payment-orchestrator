@@ -47,6 +47,25 @@ alone does not demonstrate least privilege.
 
 ---
 
+## 2026-10-19 — An empty Cloudflare POST can have a body stream
+
+The first deployed contract probe rejected empty authenticated POST requests
+because it treated any non-null Request.body as content. Local Request fixtures
+had null bodies, masking the platform difference. No database writes occurred
+in those rejected requests.
+
+The shared guard now checks an empty stream with a bounded read, rejects actual
+content and times out stalled bodies. Added a regression test with a closed
+empty ReadableStream, then reran the deployed contract flow successfully.
+Platform-boundary tests must include stream shapes observed in production.
+
+The same deployment measured 35 ms / 22 ms CPU for financial confirmation /
+replay despite HTTP 200. These exceed the documented Workers Free budget.
+The regular processor and cron remain off; successful responses are not a
+substitute for checking platform resource limits. See the inbox-runtime report.
+
+---
+
 Future meaningful failures and near misses must record:
 - context and impact;
 - root cause;
