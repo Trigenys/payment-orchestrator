@@ -117,16 +117,16 @@ test("PostgreSQL ledger and reconciliation persistence", {
 
     await t.test("ledger batches are scoped; forged merchant and payment fail", async () => {
       assert.deepEqual(await ledger1.listEntries({ projectId: otherProjectId }), []);
-      const forging = await ledger1.recordPaymentBreakdown({
-        ...evidence,
-        sourceKey: `forged-${suffix}`,
-        projectId: otherProjectId,
-        merchantId: otherMerchantId
-      });
       // Same paymentId in a different project must never succeed.
-      await assert.rejects(Promise.resolve(forging).then(r => {
-        if (r.ok) throw new Error("unexpected success");
-      }), /unexpected success/);
+      await assert.rejects(
+        ledger1.recordPaymentBreakdown({
+          ...evidence,
+          sourceKey: `forged-${suffix}`,
+          projectId: otherProjectId,
+          merchantId: otherMerchantId
+        }),
+        /does not belong to the supplied project\/merchant/
+      );
     });
 
     const reconciliation1 = new ReconciliationService({
