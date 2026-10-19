@@ -1,4 +1,10 @@
 import type { Pool, PoolClient } from "pg";
+
+/** PostgreSQL TEXT cannot contain NUL. Domain composite event keys use it. */
+function safeCompositeKey(value: string): string {
+  return Buffer.from(value, "utf8").toString("hex");
+}
+
 import type { Payment } from "../../domain/models.js";
 import type { ProviderEnvironment } from "../../providers/capabilities.js";
 import {
@@ -156,7 +162,7 @@ class PostgresPaymentTransaction implements PaymentTransaction {
   async getProviderEvent(key: string): Promise<ProviderEventReceipt | undefined> {
     const result = await this.client.query<{ payload: ProviderEventReceipt }>(
       "SELECT payload FROM payment_provider_events WHERE event_key = $1",
-      [key]
+      [safeCompositeKey(key)]
     );
     return result.rows[0]?.payload;
   }
@@ -168,7 +174,7 @@ class PostgresPaymentTransaction implements PaymentTransaction {
         received_at, payload)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb)`,
       [
-        receipt.key, receipt.fingerprint, receipt.provider,
+        safeCompositeKey(receipt.key), receipt.fingerprint, receipt.provider,
         receipt.environment, receipt.eventId, receipt.paymentId ?? null,
         receipt.receivedAt, JSON.stringify(receipt)
       ]
@@ -183,7 +189,7 @@ class PostgresPaymentTransaction implements PaymentTransaction {
        ON CONFLICT (id) DO NOTHING`,
       [
         transition.id, transition.paymentId, transition.source,
-        transition.sourceId, transition.occurredAt, JSON.stringify(transition)
+        safeCompositeKey(transition.sourceId), transition.occurredAt, JSON.stringify(transition)
       ]
     );
   }
