@@ -295,8 +295,8 @@ export class LedgerService {
       metadata: input.metadata
     });
 
-    return this.dependencies.persistence.transaction((transaction) => {
-      const existing = transaction.getBatch(
+    return this.dependencies.persistence.transaction(async (transaction) => {
+      const existing = await transaction.getBatch(
         input.projectId,
         input.sourceKey
       );
@@ -318,13 +318,14 @@ export class LedgerService {
           };
         }
 
-        const entries = transaction
+        const entries = (await transaction
           .listEntries({
             projectId: input.projectId,
             merchantId: input.merchantId,
             paymentId: input.paymentId
-          })
-          .filter((entry) => entry.batchId === existing.id);
+          }))
+          .filter((entry) => entry.batchId === existing.id)
+          .sort((a, b) => existing.entryIds.indexOf(a.id) - existing.entryIds.indexOf(b.id));
 
         return {
           ok: true,
@@ -369,7 +370,7 @@ export class LedgerService {
         recordedAt
       };
 
-      transaction.appendBatch(batch, entries);
+      await transaction.appendBatch(batch, entries);
 
       return {
         ok: true,

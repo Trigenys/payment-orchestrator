@@ -4,18 +4,20 @@ import type {
   LedgerScope
 } from "./types.js";
 
+export type LedgerMaybePromise<T> = T | Promise<T>;
+
 export interface LedgerTransaction {
   getBatch(
     projectId: string,
     sourceKey: string
-  ): LedgerBatch | undefined;
+  ): LedgerMaybePromise<LedgerBatch | undefined>;
 
   appendBatch(
     batch: LedgerBatch,
     entries: readonly LedgerEntry[]
-  ): void;
+  ): LedgerMaybePromise<void>;
 
-  listEntries(scope: LedgerScope): readonly LedgerEntry[];
+  listEntries(scope: LedgerScope): LedgerMaybePromise<readonly LedgerEntry[]>;
 }
 
 export interface LedgerPersistence {

@@ -47,4 +47,4 @@ jobs:
       - run: npm install --ignore-scripts
       - run: npm run build
       - run: npm run db:migrate
-      - run: node --test dist/test/postgres-payment-persistence.test.js
+      - run: node --test dist/test/postgres-*.test.js

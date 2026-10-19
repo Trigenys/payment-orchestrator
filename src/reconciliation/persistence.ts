@@ -1,13 +1,15 @@
 import type { ReconciliationRun } from "./types.js";
 
+export type ReconciliationMaybePromise<T> = T | Promise<T>;
+
 export interface ReconciliationTransaction {
-  getRun(key: string): ReconciliationRun | undefined;
-  appendRun(run: ReconciliationRun): void;
+  getRun(key: string): ReconciliationMaybePromise<ReconciliationRun | undefined>;
+  appendRun(run: ReconciliationRun): ReconciliationMaybePromise<void>;
   listRuns(input: {
     readonly projectId: string;
     readonly merchantId?: string;
     readonly subjectId?: string;
-  }): readonly ReconciliationRun[];
+  }): ReconciliationMaybePromise<readonly ReconciliationRun[]>;
 }
 
 export interface ReconciliationPersistence {

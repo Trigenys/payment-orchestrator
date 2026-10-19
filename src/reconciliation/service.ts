@@ -495,8 +495,8 @@ export class ReconciliationService {
     });
 
     return this.dependencies.persistence.transaction(
-      (transaction) => {
-        const existing = transaction.getRun(key);
+      async (transaction) => {
+        const existing = await transaction.getRun(key);
         if (existing) {
           return {
             ok: true,
@@ -525,7 +525,7 @@ export class ReconciliationService {
           createdAt: this.now()
         };
 
-        transaction.appendRun(run);
+        await transaction.appendRun(run);
 
         return {
           ok: true,
