@@ -28,6 +28,25 @@ Repository scaffolding may provide release *mechanics*, but it must not infer re
 
 ---
 
+## 2026-10-19 — Managed role creation defaults to administrative privileges
+
+Neon's API-created Postgres role was automatically a member of
+`neon_superuser`, with CREATEDB/CREATEROLE. The existing database owner
+could not strip those managed grants. This was discovered by inspecting
+`pg_roles` and `pg_auth_members` before deploying the database-bound probe.
+No Worker used the overprivileged connection.
+
+Created a separate SQL-managed `payments_worker` role with NOINHERIT,
+NOCREATEDB, NOCREATEROLE, NOREPLICATION and NOBYPASSRLS. Granted only
+CONNECT, schema USAGE and SELECT on migration versions for the probe,
+updated Hyperdrive, then removed the unused API-created role.
+
+Prevention: inspect effective grants and role memberships before binding
+any managed database role to a deployed Worker. A dedicated role name
+alone does not demonstrate least privilege.
+
+---
+
 Future meaningful failures and near misses must record:
 - context and impact;
 - root cause;
