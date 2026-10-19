@@ -7,7 +7,7 @@
     "skipLibCheck": true,
     "rootDir": ".",
     "outDir": "dist",
-    "types": ["node"],
+    "types": ["node", "@cloudflare/workers-types"],
     "declaration": true,
     "sourceMap": true
   },
