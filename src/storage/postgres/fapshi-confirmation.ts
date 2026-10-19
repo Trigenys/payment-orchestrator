@@ -133,10 +133,10 @@ export class FapshiSandboxConfirmation {
       // These adapters do NOT begin/commit subtransactions. Their services
       // participate in exactly this one external PostgreSQL transaction.
       const paymentPort: PaymentPersistence = {
-        transaction: (work) => work(new PostgresPaymentTransaction(client))
+        transaction: async (work) => work(new PostgresPaymentTransaction(client))
       };
       const ledgerPort: LedgerPersistence = {
-        transaction: (work) => work(new PostgresLedgerTransaction(client))
+        transaction: async (work) => work(new PostgresLedgerTransaction(client))
       };
       const paymentService = new PaymentService({ persistence: paymentPort });
       const ledgerService = new LedgerService({ persistence: ledgerPort });
