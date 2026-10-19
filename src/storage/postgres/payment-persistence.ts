@@ -164,7 +164,8 @@ class PostgresPaymentTransaction implements PaymentTransaction {
       "SELECT payload FROM payment_provider_events WHERE event_key = $1",
       [safeCompositeKey(key)]
     );
-    return result.rows[0]?.payload;
+    const payload = result.rows[0]?.payload;
+    return payload ? { ...payload, key: Buffer.from(payload.key, "hex").toString("utf8") } : undefined;
   }
 
   async putProviderEvent(receipt: ProviderEventReceipt): Promise<void> {
@@ -176,7 +177,7 @@ class PostgresPaymentTransaction implements PaymentTransaction {
       [
         safeCompositeKey(receipt.key), receipt.fingerprint, receipt.provider,
         receipt.environment, receipt.eventId, receipt.paymentId ?? null,
-        receipt.receivedAt, JSON.stringify(receipt)
+        receipt.receivedAt, JSON.stringify({ ...receipt, key: safeCompositeKey(receipt.key) })
       ]
     );
   }
@@ -189,7 +190,8 @@ class PostgresPaymentTransaction implements PaymentTransaction {
        ON CONFLICT (id) DO NOTHING`,
       [
         transition.id, transition.paymentId, transition.source,
-        safeCompositeKey(transition.sourceId), transition.occurredAt, JSON.stringify(transition)
+        safeCompositeKey(transition.sourceId), transition.occurredAt,
+        JSON.stringify({ ...transition, sourceId: safeCompositeKey(transition.sourceId) })
       ]
     );
   }
@@ -200,7 +202,10 @@ class PostgresPaymentTransaction implements PaymentTransaction {
        WHERE payment_id = $1 ORDER BY sequence ASC`,
       [paymentId]
     );
-    return result.rows.map((row) => row.payload);
+    return result.rows.map((row) => ({
+      ...row.payload,
+      sourceId: Buffer.from(row.payload.sourceId, "hex").toString("utf8")
+    }));
   }
 
   async listProviderEvents(paymentId: string): Promise<readonly ProviderEventReceipt[]> {
@@ -209,7 +214,10 @@ class PostgresPaymentTransaction implements PaymentTransaction {
        WHERE payment_id = $1 ORDER BY received_at ASC, event_key ASC`,
       [paymentId]
     );
-    return result.rows.map((row) => row.payload);
+    return result.rows.map((row) => ({
+      ...row.payload,
+      key: Buffer.from(row.payload.key, "hex").toString("utf8")
+    }));
   }
 }
 
