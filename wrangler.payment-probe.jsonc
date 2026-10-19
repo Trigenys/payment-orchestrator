@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "trigenys-payment-sandbox-probe",
+  "main": "src/cloudflare/probe.ts",
+  "compatibility_date": "2026-10-19",
+  "workers_dev": true,
+  "triggers": {
+    "crons": []
+  }
+}
