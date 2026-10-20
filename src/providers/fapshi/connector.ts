@@ -21,7 +21,7 @@ import { mapFapshiStatus } from "./status.js";
 
 export interface FapshiHostedConnectorOptions {
   readonly client: FapshiHostedClient;
-  /** Bound service owner. A sandbox payment must not switch merchant/project. */
+  /** Bound service owner. A payment must not switch merchant/project. */
   readonly projectId: string;
   readonly merchantId: string;
   readonly providerAccountId?: string;
@@ -73,7 +73,16 @@ export class FapshiHostedConnector implements ProviderConnector {
   }
 
   getCapabilityProfile() {
-    return fapshiHostedCapabilityProfile;
+    return {
+      ...fapshiHostedCapabilityProfile,
+      rules: fapshiHostedCapabilityProfile.rules.map(rule => ({
+        ...rule, environments: [this.environment]
+      }))
+    };
+  }
+
+  get environment() {
+    return this.options.client.environment;
   }
 
   async createProviderAccount(
@@ -81,7 +90,7 @@ export class FapshiHostedConnector implements ProviderConnector {
     context: ProviderOperationContext
   ): Promise<ProviderResult<ProviderAccount>> {
     const gate = gateCapabilities(
-      fapshiHostedCapabilityProfile, ["marketplace_accounts"], context
+      this.getCapabilityProfile(), ["marketplace_accounts"], context
     );
     if (!gate.ok) return gate;
     return failure("provider_rejected", "Fapshi marketplace accounts are not implemented.");
@@ -92,7 +101,7 @@ export class FapshiHostedConnector implements ProviderConnector {
     context: ProviderOperationContext
   ): Promise<ProviderResult<Payment>> {
     const gate = gateCapabilities(
-      fapshiHostedCapabilityProfile,
+      this.getCapabilityProfile(),
       requiredCapabilitiesForPayment(input), context
     );
     if (!gate.ok) return gate;
@@ -138,7 +147,7 @@ export class FapshiHostedConnector implements ProviderConnector {
     }
 
     if (response.status === 401 || response.status === 403) {
-      return failure("authentication_failed", "Fapshi rejected sandbox credentials.");
+      return failure("authentication_failed", "Fapshi rejected the configured credentials.");
     }
     if (response.status === 429) {
       return failure("rate_limited", "Fapshi initiation rate limited; outcome must be reconciled.", false);
@@ -200,7 +209,7 @@ export class FapshiHostedConnector implements ProviderConnector {
     input: VerifyPaymentInput,
     context: ProviderOperationContext
   ): Promise<ProviderResult<PaymentVerification>> {
-    const gate = gateCapabilities(fapshiHostedCapabilityProfile, ["collect"], context);
+    const gate = gateCapabilities(this.getCapabilityProfile(), ["collect"], context);
     if (!gate.ok) return gate;
     if (context.projectId !== this.options.projectId) {
       return failure("invalid_request", "Project is not authorized for this Fapshi service.");
@@ -278,7 +287,7 @@ export class FapshiHostedConnector implements ProviderConnector {
     _input: CreateRefundInput,
     context: ProviderOperationContext
   ): Promise<ProviderResult<Refund>> {
-    const gate = gateCapabilities(fapshiHostedCapabilityProfile, ["refunds"], context);
+    const gate = gateCapabilities(this.getCapabilityProfile(), ["refunds"], context);
     if (!gate.ok) return gate;
     return failure("provider_rejected", "Refunds are not enabled for this pilot.");
   }
@@ -287,7 +296,7 @@ export class FapshiHostedConnector implements ProviderConnector {
     _input: CreatePayoutInput,
     context: ProviderOperationContext
   ): Promise<ProviderResult<Payout>> {
-    const gate = gateCapabilities(fapshiHostedCapabilityProfile, ["payouts"], context);
+    const gate = gateCapabilities(this.getCapabilityProfile(), ["payouts"], context);
     if (!gate.ok) return gate;
     return failure("provider_rejected", "Payouts are not enabled for this pilot.");
   }
@@ -296,7 +305,7 @@ export class FapshiHostedConnector implements ProviderConnector {
     _input: GetSettlementInput,
     context: ProviderOperationContext
   ): Promise<ProviderResult<Settlement>> {
-    const gate = gateCapabilities(fapshiHostedCapabilityProfile, ["settlement_status"], context);
+    const gate = gateCapabilities(this.getCapabilityProfile(), ["settlement_status"], context);
     if (!gate.ok) return gate;
     return failure("provider_rejected", "Settlement status is not enabled for this pilot.");
   }

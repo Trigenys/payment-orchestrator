@@ -66,6 +66,27 @@ substitute for checking platform resource limits. See the inbox-runtime report.
 
 ---
 
+## 2026-10-20 — A pilot environment leaked into reusable runtime logic
+
+The Fapshi pilot fixed sandbox in the client origin, capability profile,
+confirmation, SQL claims and verification-budget constraint. Having a live
+service would have required changes at every layer instead of configuration.
+No live keys were installed and no live payment was made.
+
+Root cause: sandbox rollout gating was encoded as provider/domain behavior.
+The common transport, coordinator and worker now take one explicit environment;
+entrypoints select only that environment's credentials, identities and database.
+Legacy sandbox entrypoints delegate to the shared implementation. Migration 006
+preserves sandbox attempts while allowing an independently scoped live budget.
+
+Prevention: contract tests cover both modes, missing live configuration and
+cross-environment calls. PostgreSQL tests deliberately reuse a PSP reference and
+service name across modes to prove inbox, binding, quota and effect isolation.
+An account's availability and a deployment's activation belong in configuration,
+not in a fork of the payment algorithm.
+
+---
+
 Future meaningful failures and near misses must record:
 - context and impact;
 - root cause;

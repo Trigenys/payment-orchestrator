@@ -74,13 +74,14 @@ const liveContext = {
   environment: "live" as const
 };
 
-function fixture() {
+function fixture(environment: "sandbox" | "live" = "sandbox") {
   const http = new StubHttpClient();
   const client = new FapshiHostedClient({
+    environment,
     httpClient: http,
     getCredentials: async () => ({
-      apiuser: "dummy-sandbox-user",
-      apikey: "dummy-sandbox-key"
+      apiuser: `dummy-${environment}-user`,
+      apikey: `dummy-${environment}-key`
     })
   });
   let id = 0;
@@ -115,10 +116,12 @@ runProviderContractSuite("FapshiHostedConnector", {
   marketplaceAccountsExpected: "unsupported"
 });
 
-test("only XAF/Cameroon sandbox hosted collection is advertised", () => {
+test("XAF/Cameroon hosted collection supports both environments, each client is bound to one", () => {
   for (const cap of ["collect", "mobile_money"] as const) {
     assert.equal(evaluateCapability(fapshiHostedCapabilityProfile, cap, sandboxContext).supported, true);
-    assert.equal(evaluateCapability(fapshiHostedCapabilityProfile, cap, liveContext).supported, false);
+    assert.equal(evaluateCapability(fapshiHostedCapabilityProfile, cap, liveContext).supported, true);
+    assert.equal(evaluateCapability(fixture().connector.getCapabilityProfile(), cap, liveContext).supported, false);
+    assert.equal(evaluateCapability(fixture("live").connector.getCapabilityProfile(), cap, sandboxContext).supported, false);
   }
   for (const cap of ["refunds", "payouts", "marketplace_accounts", "split_payments", "settlement_status"] as const) {
     assert.equal(evaluateCapability(fapshiHostedCapabilityProfile, cap, sandboxContext).supported, false);
@@ -251,4 +254,29 @@ test("live environment cannot initiate even with dummy sandbox credentials", asy
   assert.equal(result.ok, false);
   assert.equal(http.requests.length, 0);
   if (!result.ok) assert.equal(result.error.code, "capability_unsupported");
+});
+
+test("live client uses live endpoints and its own credentials for creation and verification", async () => {
+  const { connector, http } = fixture("live");
+  const created = await connector.createPayment(paymentInput(), liveContext);
+  assert.equal(created.ok, true);
+  if (created.ok) assert.equal(created.value.providerEnvironment, "live");
+  assert.equal((await connector.verifyPayment({ externalReference: "txn-123" }, liveContext)).ok, true);
+  assert.deepEqual(http.requests.map(request => request.url), [
+    "https://live.fapshi.com/initiate-pay", "https://live.fapshi.com/payment-status/txn-123"
+  ]);
+  for (const request of http.requests) {
+    assert.equal(request.headers?.apiuser, "dummy-live-user");
+    assert.equal(request.headers?.apikey, "dummy-live-key");
+  }
+});
+
+test("cross-environment create and verify reject before any PSP call", async () => {
+  for (const environment of ["sandbox", "live"] as const) {
+    const { connector, http } = fixture(environment);
+    const foreign = environment === "sandbox" ? liveContext : sandboxContext;
+    assert.equal((await connector.createPayment(paymentInput(), foreign)).ok, false);
+    assert.equal((await connector.verifyPayment({ externalReference: "txn-123" }, foreign)).ok, false);
+    assert.equal(http.requests.length, 0);
+  }
 });

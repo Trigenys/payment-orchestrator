@@ -1,29 +1,19 @@
 import { Pool } from "pg";
-import { createSandboxInboxWorker, isInboxSchemaReady, type InboxRuntimeConfig } from "./runtime.js";
+import { createInboxWorker, isInboxSchemaReady } from "./runtime.js";
+import { readInboxRuntimeConfig, runtimeDatabaseUrl, runtimeEnabled } from "./configuration.js";
 
 /** Private one-shot entrypoint for an existing server/container, with no HTTP listener. */
 export async function runOnce(environment: Readonly<Record<string, string | undefined>> = process.env): Promise<void> {
-  if (environment.PAYMENT_SANDBOX_SWEEP_ENABLED !== "true") {
-    throw new Error("Sandbox sweep is disabled.");
+  if (!runtimeEnabled(environment, "PAYMENT_SWEEP_ENABLED", "PAYMENT_SANDBOX_SWEEP_ENABLED")) {
+    throw new Error("Payment sweep is disabled.");
   }
-  const required = (name: string): string => {
-    const value = environment[name]?.trim();
-    if (!value) throw new Error(`Sandbox sweep requires ${name}.`);
-    return value;
-  };
-  const config: InboxRuntimeConfig = {
-    projectId: required("PAYMENT_SANDBOX_PROJECT_ID"),
-    merchantId: required("PAYMENT_SANDBOX_MERCHANT_ID"),
-    serviceName: required("FAPSHI_SANDBOX_SERVICE_NAME"),
-    apiuser: required("FAPSHI_SANDBOX_APIUSER"),
-    apikey: required("FAPSHI_SANDBOX_APIKEY")
-  };
-  const pool = new Pool({ connectionString: required("DATABASE_URL"), max: 2,
+  const config = readInboxRuntimeConfig(environment);
+  const pool = new Pool({ connectionString: runtimeDatabaseUrl(environment), max: 2,
     connectionTimeoutMillis: 5000, statement_timeout: 5000, query_timeout: 7000 });
   try {
-    if (!await isInboxSchemaReady(pool)) throw new Error("Sandbox schema is not ready.");
-    const summary = await createSandboxInboxWorker(pool, config).runBatch(1);
-    console.log(JSON.stringify({ event: "sandbox.inbox.sweep", ...summary }));
+    if (!await isInboxSchemaReady(pool)) throw new Error("Payment schema is not ready.");
+    const summary = await createInboxWorker(pool, config).runBatch(1);
+    console.log(JSON.stringify({ event: "payment.inbox.sweep", environment: config.environment, ...summary }));
   } finally {
     await pool.end();
   }
@@ -31,7 +21,7 @@ export async function runOnce(environment: Readonly<Record<string, string | unde
 
 if (process.argv[1]?.endsWith("/worker/run-once.js")) {
   void runOnce().catch(() => {
-    console.error(JSON.stringify({ event: "sandbox.inbox.sweep_failed" }));
+    console.error(JSON.stringify({ event: "payment.inbox.sweep_failed" }));
     process.exitCode = 1;
   });
 }

@@ -1,5 +1,10 @@
 # Atomic Fapshi sandbox confirmation — #24 / #27 / #29
 
+Update (2026-10-20): `FapshiConfirmation` now runs this same transaction for an
+explicit `sandbox` or `live` environment. `FapshiSandboxConfirmation` is a thin
+compatibility adapter. Historical sandbox scope below is not a second financial
+implementation. See [environment configuration](fapshi-environments.md).
+
 State: **library foundation merged only after real PostgreSQL CI**. No webhook endpoint, REST authorization, delivery worker, consumer credits, secrets, or live Fapshi collections are configured by this feature.
 
 ## Single transaction and sequence

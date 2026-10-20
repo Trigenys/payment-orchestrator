@@ -3,23 +3,24 @@ import { once } from "node:events";
 import test from "node:test";
 import type { Pool } from "pg";
 import { createFapshiSandboxRoutes } from "../src/api/fapshi-sandbox-routes.js";
+import { createFapshiRoutes } from "../src/api/fapshi-routes.js";
 import { createServiceServer } from "../src/server.js";
 import type { InboxInput } from "../src/storage/postgres/durable-messages.js";
 
 const token = "t".repeat(48);
 const webhookSecret = "w".repeat(48);
 
-function fixture() {
+function fixture(environment: "sandbox" | "live" = "sandbox", persistedEnvironment = environment) {
   const receipts: InboxInput[] = [];
   const confirmations: string[] = [];
   const verificationRequests: string[] = [];
   let allowed = true;
-  const routes = createFapshiSandboxRoutes({
+  const options = {
     pool: {
       query: async () => ({
         rows: [{
           payload: {
-            provider: "fapshi", providerEnvironment: "sandbox",
+            provider: "fapshi", providerEnvironment: persistedEnvironment,
             providerReference: "trans-1", status: "created",
             amount: { amountMinor: 150, currency: "XAF" }
           }
@@ -32,22 +33,24 @@ function fixture() {
     webhookSecret,
     internalApiToken: token,
     messageStore: {
-      recordInbox: async receipt => {
+      recordInbox: async (receipt: InboxInput) => {
         receipts.push(receipt);
-        return { id: "inbox-id", replayed: receipts.length > 1, status: "received" };
+        return { id: "inbox-id", replayed: receipts.length > 1, status: "received" as const };
       }
     },
     confirmation: {
-      confirm: async paymentId => {
+      confirm: async (paymentId: string) => {
         confirmations.push(paymentId);
         return { paymentId, ledgerBatchId: "ledger", outboxId: "outbox", replayed: false };
       }
     },
-    reserveStatusRead: async ref => {
+    reserveStatusRead: async (ref: string) => {
       verificationRequests.push(ref);
       return allowed;
     }
-  });
+  };
+  const routes = environment === "sandbox" ? createFapshiSandboxRoutes(options) :
+    createFapshiRoutes({ ...options, environment });
   const server = createServiceServer({ name: "test", version: "0.1.0" }, routes);
   return {
     receipts, confirmations, verificationRequests,
@@ -132,6 +135,44 @@ test("sandbox webhook enforces secret, JSON bounds and privacy", async t => {
   assert.equal(huge.status, 413);
   assert.equal(app.receipts.length, 2);
   assert.equal((await fetch(base + "/health")).status, 200);
+});
+
+test("live paths persist live observations; sandbox paths cannot enter the live handler", async t => {
+  const app = fixture("live");
+  app.server.listen(0, "127.0.0.1");
+  await once(app.server, "listening");
+  t.after(() => app.server.close());
+  const address = app.server.address();
+  assert.ok(address && typeof address === "object");
+  const base = `http://127.0.0.1:${address.port}`;
+  const headers = { "content-type": "application/json", "x-wh-secret": webhookSecret };
+  assert.equal((await fetch(base + "/v1/webhooks/fapshi/sandbox", {
+    method: "POST", headers, body: JSON.stringify(payload())
+  })).status, 404);
+  assert.equal((await fetch(base + "/v1/webhooks/fapshi/live", {
+    method: "POST", headers, body: JSON.stringify(payload())
+  })).status, 200);
+  assert.equal(app.receipts.length, 1);
+  assert.equal(app.receipts[0]?.environment, "live");
+  assert.equal(app.confirmations.length, 0);
+  assert.equal((await fetch(base + "/v1/live/payments/pay-live/confirm", {
+    method: "POST", headers: { authorization: `Bearer ${token}` }
+  })).status, 200);
+  assert.deepEqual(app.confirmations, ["pay-live"]);
+});
+
+test("live confirmation refuses a persisted sandbox payment before quota or verification", async t => {
+  const app = fixture("live", "sandbox");
+  app.server.listen(0, "127.0.0.1");
+  await once(app.server, "listening");
+  t.after(() => app.server.close());
+  const address = app.server.address();
+  assert.ok(address && typeof address === "object");
+  assert.equal((await fetch(`http://127.0.0.1:${address.port}/v1/live/payments/pay-1/confirm`, {
+    method: "POST", headers: { authorization: `Bearer ${token}` }
+  })).status, 404);
+  assert.equal(app.confirmations.length, 0);
+  assert.equal(app.verificationRequests.length, 0);
 });
 
 test("internal routes require separate bearer secret, persisted status and quota", async t => {

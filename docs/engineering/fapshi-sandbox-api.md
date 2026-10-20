@@ -1,5 +1,10 @@
 # Opt-in sandbox HTTP API / Fapshi webhook receiver (#26 / #27)
 
+Compatibility note (2026-10-20): these sandbox paths and variables remain valid.
+The implementation is now shared with an explicitly selected live environment;
+see [environment configuration](fapshi-environments.md). The sandbox adapter
+delegates to `createFapshiRoutes` and cannot enable live by itself.
+
 **OFF by default. No Fapshi production checkout or Précis credit allocation is enabled.** The default service still only exposes `GET /health`.
 
 ## Routes (when explicitly enabled)
