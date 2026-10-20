@@ -1,9 +1,9 @@
-import type { FapshiSandboxConfirmation } from "../storage/postgres/fapshi-confirmation.js";
+import type { FapshiConfirmation } from "../storage/postgres/fapshi-confirmation.js";
 import type { PostgresInboxWorkerStore, InboxLease } from "./inbox-persistence.js";
 
 type InboxStorePort = Pick<PostgresInboxWorkerStore,
   "claim" | "complete" | "retry" | "deferRateLimit" | "findBoundPayment">;
-type ConfirmPort = Pick<FapshiSandboxConfirmation, "confirm">;
+type ConfirmPort = Pick<FapshiConfirmation, "confirm">;
 
 export interface FapshiInboxWorkerOptions {
   readonly projectId: string;

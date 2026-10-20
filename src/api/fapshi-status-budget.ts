@@ -1,4 +1,6 @@
 import type { Pool } from "pg";
+import type { ProviderEnvironment } from "../providers/capabilities.js";
+import { parseFapshiEnvironment } from "../providers/fapshi/environment.js";
 
 /**
  * Transactionally reserve an attempt BEFORE issuing the external request.
@@ -9,10 +11,12 @@ import type { Pool } from "pg";
  * Other independent clients using the same Fapshi credentials still need to
  * coordinate externally; do not run another unaudited verification poller.
  */
-export async function reserveFapshiSandboxStatusRead(
+export async function reserveFapshiStatusRead(
   pool: Pool,
-  providerReference: string
+  providerReference: string,
+  environment: ProviderEnvironment
 ): Promise<boolean> {
+  parseFapshiEnvironment(environment);
   if (!/^[A-Za-z0-9_-]{1,160}$/.test(providerReference)) {
     throw new Error("Invalid Fapshi provider reference.");
   }
@@ -25,9 +29,9 @@ export async function reserveFapshiSandboxStatusRead(
     const count = await client.query<{ count: string }>(
       `SELECT COUNT(*)::text AS count
        FROM fapshi_status_attempts
-       WHERE environment='sandbox' AND provider_reference=$1
+       WHERE environment=$2 AND provider_reference=$1
          AND attempted_at > NOW() - INTERVAL '60 seconds'`,
-      [providerReference]
+      [providerReference, environment]
     );
     if (Number(count.rows[0]?.count ?? 0) >= 5) {
       await client.query("COMMIT");
@@ -36,8 +40,8 @@ export async function reserveFapshiSandboxStatusRead(
     }
     await client.query(
       `INSERT INTO fapshi_status_attempts(environment,provider_reference)
-       VALUES('sandbox',$1)`,
-      [providerReference]
+       VALUES($2,$1)`,
+      [providerReference, environment]
     );
     await client.query("COMMIT");
     begun = false;
@@ -50,4 +54,9 @@ export async function reserveFapshiSandboxStatusRead(
   } finally {
     client.release();
   }
+}
+
+/** Backward-compatible sandbox reservation, using the same implementation. */
+export function reserveFapshiSandboxStatusRead(pool: Pool, providerReference: string): Promise<boolean> {
+  return reserveFapshiStatusRead(pool, providerReference, "sandbox");
 }

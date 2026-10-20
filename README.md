@@ -57,6 +57,9 @@ See [RAIDER audit](docs/RAIDER-AUDIT.md), [provider capability contract](docs/pr
 
 See [TypeScript SDK contract](docs/sdk-typescript.md).\n\n## Runtime
 
+Fapshi uses one connector and processing pipeline with separate configured
+[sandbox/live environments](docs/engineering/fapshi-environments.md).
+
 The AppFactory foundation currently uses:
 
 - Node.js 24;

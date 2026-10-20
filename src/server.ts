@@ -12,7 +12,7 @@ export type ServiceRouteHandler = (
 
 /**
  * The existing /health stays independent of PostgreSQL and payment providers.
- * Opt-in sandbox routes are mounted only by the explicitly configured runtime.
+ * Payment routes are mounted only by the explicitly configured runtime.
  */
 export function createServiceServer(
   info: ServiceInfo,

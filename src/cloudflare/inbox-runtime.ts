@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { Pool } from "pg";
-import { createSandboxInboxWorker, isInboxSchemaReady, type InboxRuntimeConfig } from "../worker/runtime.js";
+import { createInboxWorker, isInboxSchemaReady, type InboxRuntimeConfig } from "../worker/runtime.js";
 import type { WorkerBatchResult } from "../worker/fapshi-inbox-worker.js";
 
 export interface InvocationRuntime {
@@ -18,7 +18,7 @@ export const createInvocationRuntime: InvocationFactory = (env, config) => {
     max: 2, connectionTimeoutMillis: 5000,
     statement_timeout: 5000, query_timeout: 7000
   });
-  const worker = createSandboxInboxWorker(pool, config);
+  const worker = createInboxWorker(pool, config);
   return {
     ready: () => isInboxSchemaReady(pool),
     runBatch: maximum => worker.runBatch(maximum),
@@ -29,6 +29,9 @@ export const createInvocationRuntime: InvocationFactory = (env, config) => {
 function configuration(env: PaymentInboxEnv): InboxRuntimeConfig | undefined {
   if (env.CLOUDFLARE_SANDBOX_INBOX_ENABLED !== "true") return undefined;
   const config = {
+    // This existing deployment remains sandbox-only while its CPU gate is open.
+    // The financial composition below is shared with the environment-aware AWS runtime.
+    environment: "sandbox" as const,
     projectId: env.PAYMENT_SANDBOX_PROJECT_ID,
     merchantId: env.PAYMENT_SANDBOX_MERCHANT_ID,
     serviceName: env.FAPSHI_SANDBOX_SERVICE_NAME,

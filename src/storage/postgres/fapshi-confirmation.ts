@@ -6,12 +6,15 @@ import { PaymentService } from "../../payments/service.js";
 import type { PaymentPersistence } from "../../payments/persistence.js";
 import type { PaymentVerification } from "../../providers/contracts.js";
 import { FapshiHostedConnector } from "../../providers/fapshi/connector.js";
+import type { ProviderEnvironment } from "../../providers/capabilities.js";
+import { parseFapshiEnvironment } from "../../providers/fapshi/environment.js";
 import { PostgresLedgerTransaction } from "./ledger-persistence.js";
 import { PostgresPaymentTransaction } from "./payment-persistence.js";
 import { enqueueOutboxInTransaction } from "./durable-messages.js";
 
 export interface FapshiConfirmationOptions {
   readonly pool: Pool;
+  readonly environment: ProviderEnvironment;
   /** Pilot service identity; NOT user-controlled fields from an HTTP request. */
   readonly projectId: string;
   readonly merchantId: string;
@@ -28,7 +31,7 @@ export interface FapshiConfirmationOutcome {
 }
 
 /**
- * Sandbox-only transaction coordinator.
+ * Shared transaction coordinator, bound to one provider environment.
  *
  * The provider is queried by the authenticated Fapshi connector BEFORE
  * obtaining a DB transaction/lock. Everything afterwards uses one PoolClient:
@@ -38,12 +41,14 @@ export interface FapshiConfirmationOutcome {
  * grant. A future authenticated worker must throttle verification attempts
  * to Fapshi's documented per-transaction status-query rate.
  */
-export class FapshiSandboxConfirmation {
+export class FapshiConfirmation {
   constructor(private readonly options: FapshiConfirmationOptions) {
+    parseFapshiEnvironment(options.environment);
     if (!options.projectId || !options.merchantId ||
         !options.expectedServiceName.trim() ||
-        options.connector.provider !== "fapshi") {
-      throw new Error("Fapshi sandbox confirmation requires explicit service identity.");
+        options.connector.provider !== "fapshi" ||
+        options.connector.environment !== options.environment) {
+      throw new Error("Fapshi confirmation requires matching environment and explicit service identity.");
     }
   }
 
@@ -52,12 +57,12 @@ export class FapshiSandboxConfirmation {
         payment.merchantId !== this.options.merchantId ||
         payment.providerAccountId !== this.options.providerAccountId ||
         payment.provider !== "fapshi" ||
-        payment.providerEnvironment !== "sandbox" ||
+        payment.providerEnvironment !== this.options.environment ||
         !payment.providerReference ||
         payment.amount.currency !== "XAF" ||
         !Number.isSafeInteger(payment.amount.amountMinor) ||
         payment.amount.amountMinor < 100) {
-      throw new Error("Payment is not a bound Fapshi sandbox collection for this service.");
+      throw new Error("Payment is not a bound Fapshi collection for this environment and service.");
     }
   }
 
@@ -107,7 +112,7 @@ export class FapshiSandboxConfirmation {
     // authenticated status endpoint is the sole status authority here.
     const response = await this.options.connector.verifyPayment(
       { externalReference: preliminary.providerReference! },
-      { projectId: this.options.projectId, environment: "sandbox", country: "CM", currency: "XAF" }
+      { projectId: this.options.projectId, environment: this.options.environment, country: "CM", currency: "XAF" }
     );
     if (!response.ok) {
       throw new Error(`Fapshi status verification failed: ${response.error.code}`);
@@ -148,7 +153,7 @@ export class FapshiSandboxConfirmation {
       this.validateVerification(current, authoritative);
 
       const binding = await new PostgresPaymentTransaction(client).getProviderBinding(
-        "fapshi", "sandbox", current.providerReference!
+        "fapshi", this.options.environment, current.providerReference!
       );
       if (binding?.paymentId !== paymentId) {
         throw new Error("Fapshi provider reference is not bound to this payment.");
@@ -160,7 +165,7 @@ export class FapshiSandboxConfirmation {
       if (current.status !== "succeeded") {
         const applied = await paymentService.ingestProviderEvent({
           provider: "fapshi",
-          environment: "sandbox",
+          environment: this.options.environment,
           eventId: `authoritative-success-${paymentId}`,
           providerPaymentReference: current.providerReference!,
           status: "succeeded",
@@ -238,5 +243,12 @@ export class FapshiSandboxConfirmation {
     } finally {
       client.release();
     }
+  }
+}
+
+/** Compatibility adapter for existing sandbox consumers; financial logic is shared. */
+export class FapshiSandboxConfirmation extends FapshiConfirmation {
+  constructor(options: Omit<FapshiConfirmationOptions, "environment">) {
+    super({ ...options, environment: "sandbox" });
   }
 }
