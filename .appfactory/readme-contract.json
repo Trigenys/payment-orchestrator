@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "name": "Trigenys Payment Orchestrator",
+  "stage": "prototype",
+  "tagline": "Give multiple applications a reliable payment interface without blurring the difference between a PSP ledger, your own accounting mirror and actual settlement.",
+  "problem": "Each application integrating local and regional payment providers separately risks duplicated transactions, inconsistent webhook retries, misunderstood merchant identity and fragile settlement reporting. A shared orchestration layer needs explicit financial invariants rather than generic connector promises.",
+  "scenario": "A consuming application creates a payment intent with an idempotency key. The orchestrator validates the provider's real environment/country/currency capabilities, records normalized state, verifies callback evidence and reconciles authoritative PSP records against an append-only local mirror.",
+  "differentiation": "Provider capability negotiation, scoped identities, integer money amounts, deterministic replay keys and reconciliation discrepancies provide a safe shared domain model while the PSP retains custody and settlement responsibilities.",
+  "architecture": "Application or TypeScript SDK -> REST v1/API core -> project and merchant context -> capability-checked provider adapters -> PSP; webhook authenticity and idempotent event receipt -> payment state and append-only ledger mirror -> reconciliation against provider source data.",
+  "limitations": "The project remains a pre-production foundation/prototype; no provider is warranted as production supported. In-memory adapters and local contract tests are not durable financial settlement, certifications or live PSP enablement. Trigenys does not hold customer or merchant funds.",
+  "capabilities": [
+    {
+      "name": "Provider-neutral domain",
+      "description": "Represent project, merchant, payment and provider capabilities without assuming all PSP features exist.",
+      "status": "shipped",
+      "evidence": "docs/provider-contract.md"
+    },
+    {
+      "name": "Ledger and reconciliation model",
+      "description": "Define append-only mirror semantics, discrepancy types and replay rules independent of wallet custody.",
+      "status": "shipped",
+      "evidence": "docs/ledger-reconciliation.md"
+    },
+    {
+      "name": "Production PSP coverage",
+      "description": "Verify real credentials, country-specific capabilities and provider webhooks before committing supported rails.",
+      "status": "planned"
+    },
+    {
+      "name": "Durable finance operations",
+      "description": "Choose transactional persistent storage and deployment controls before handling live payment flows.",
+      "status": "in-development"
+    }
+  ],
+  "roadmap": [
+    {
+      "name": "Provider sandbox proof",
+      "exitCriteria": "Pass a provider-specific contract and authenticated webhook test suite with real sandbox capability evidence."
+    },
+    {
+      "name": "Durable core",
+      "exitCriteria": "Demonstrate atomic idempotency, append-only ledger persistence, replay convergence and tenant isolation."
+    },
+    {
+      "name": "First consumer and compliance",
+      "exitCriteria": "Complete actual consumer integration, threat review and regulatory evaluation before enabling live payments."
+    }
+  ],
+  "references": [
+    {
+      "name": "Provider capability contract",
+      "url": "https://github.com/Trigenys/payment-orchestrator/blob/main/docs/provider-contract.md",
+      "relevance": "Documents fail-closed capability negotiation for country and environment."
+    },
+    {
+      "name": "RAIDER README contract",
+      "url": "https://github.com/Trigenys/appfactory/blob/main/docs/product-readme-contract.md",
+      "relevance": "Versioned documentation assurance shared across Trigenys services."
+    }
+  ],
+  "requiredHeadings": [
+    "Why payment orchestration",
+    "Transaction trust boundary",
+    "What is implemented and what is not",
+    "Proof before production",
+    "Target",
+    "Runtime",
+    "Public status"
+  ],
+  "requiredTerms": [
+    "idempotency",
+    "webhook",
+    "PSP",
+    "ledger",
+    "reconciliation",
+    "prototype",
+    "Fapshi"
+  ],
+  "requiredFiles": [
+    "docs/provider-contract.md",
+    "docs/ledger-reconciliation.md",
+    "docs/payment-state-machine.md",
+    "docs/architecture.md",
+    "docs/security/threat-model.md"
+  ],
+  "presentation": {
+    "variant": "centered",
+    "headline": "One payment contract. No double charges by design.",
+    "summary": "Provider-neutral payment orchestration for African payment rails, designed around explicit PSP capabilities, replay-safe events and auditable reconciliation — not custody of funds.",
+    "badges": [
+      {
+        "label": "Stage",
+        "value": "Prototype",
+        "color": "orange",
+        "href": "#what-is-implemented-and-what-is-not"
+      },
+      {
+        "label": "Focus",
+        "value": "Idempotency",
+        "color": "6d28d9",
+        "href": "#transaction-trust-boundary"
+      },
+      {
+        "label": "Architecture",
+        "value": "PSP adapters",
+        "color": "0969da",
+        "href": "#target"
+      },
+      {
+        "label": "Evidence",
+        "value": "Ledger mirror",
+        "color": "263238",
+        "href": "#what-is-implemented-and-what-is-not"
+      }
+    ],
+    "navigation": [
+      {
+        "label": "Why",
+        "href": "#why-payment-orchestration"
+      },
+      {
+        "label": "Trust boundary",
+        "href": "#transaction-trust-boundary"
+      },
+      {
+        "label": "Maturity",
+        "href": "#what-is-implemented-and-what-is-not"
+      },
+      {
+        "label": "Production gates",
+        "href": "#proof-before-production"
+      },
+      {
+        "label": "API model",
+        "href": "#target"
+      },
+      {
+        "label": "Runtime",
+        "href": "#runtime"
+      },
+      {
+        "label": "Status",
+        "href": "#public-status"
+      }
+    ]
+  }
+}
