@@ -65,7 +65,7 @@ test("signed outbox: persisted success + immutable journal before delivery, repl
 
     const applied = await payments.ingestProviderEvent({
       eventId: `signed-success-${suffix}`, provider: "fapshi",
-      environment: "sandbox", providerPaymentReference,
+      environment: "sandbox", providerPaymentReference: providerReference,
       status: "succeeded", occurredAt: "2026-10-28T00:00:00Z"
     });
     assert.equal(applied.ok, true);
